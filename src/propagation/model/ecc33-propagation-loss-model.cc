@@ -31,7 +31,7 @@
   *  L   = A_fs + A_bm - G_b - G_r
   * A_fs = 92.4 + 20log(d) + log(f)
   * A_bm = 20.41 + 9.83log(d) + 7.894log(f) + 9.56[log(f)]^2
-  * G_b  = log(h_b/200)(13.958 + 5.8log(d))^2
+  * G_b  = log(h_b/200)(13.958 + 5.8log(d)^2)
   * G_r suburban = [42.57 + 13.7log(f)][log(h_r)-0.585]
   * G_r urban    = 0.759h_r - 1.862
   */
@@ -136,23 +136,24 @@ ECC33PropagationLossModel::GetEnvironment (void) const
 double
 ECC33PropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
 {
-  double distance = a->GetDistanceFrom (b);
-  distance = distance / 1000;
-  double frequency = m_frequency/1e9;
+  double distance = (a->GetDistanceFrom (b)) / 1e3; //distance in km
+  double frequency = m_frequency / 1e9;             //frequency in GHz
 
-  double A_fs = 92.4 + 20*std::log10(distance) + 20*std::log10(frequency);
-  double A_bm = 20.41 + 9.83*std::log10(distance) + 7.89*std::log10(frequency) + 9.56*pow( std::log10(frequency), 2);
-  double G_b = std::log10(m_TxAntennaHeight/200)*pow( (13.958 + 5.8*std::log10(distance)), 2);
+  double A_fs = 92.4 + 20*log10(distance) + 20*log10(frequency);
+  double A_bm = 20.41 + 9.83*std::log10(distance) + 7.89*log10(frequency) + 9.56*pow( log10(frequency), 2);
+  double G_b = log10(m_TxAntennaHeight/200)*(13.958 + 5.8*pow(log10(distance), 2));
   double G_r = 0.0;
   if (m_environment == Urban){
     G_r = 0.759*m_RxAntennaHeight - 1.862;
   } else {
-    G_r = (42.57 + 13.7*std::log10(frequency))*(std::log10(m_RxAntennaHeight) - 0.585);
+    G_r = (42.57 + 13.7*log10(frequency))*(log10(m_RxAntennaHeight) - 0.585);
   }
 
   double loss_in_db = A_fs + A_bm - G_b - G_r;
 
-  NS_LOG_DEBUG ("dist =" << distance << ", Path Loss = " << loss_in_db);
+  NS_LOG_DEBUG ("dist =" << distance << ", freq = " << frequency << ", Tx antenna height = " << m_TxAntennaHeight << ", Rx antenna height = " << m_RxAntennaHeight << ", Path Loss = " << loss_in_db << ", G_r = " << G_r << ", G_b = " << G_b << ", A_fs = " << A_fs << ", A_bm = " << A_bm);
+
+
 
   return (0 - loss_in_db);
 }
