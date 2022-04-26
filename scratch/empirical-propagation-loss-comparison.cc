@@ -20,6 +20,8 @@
 #include "ns3/config.h"
 #include "ns3/uinteger.h"
 #include "ns3/boolean.h"
+#include <ns3/double.h>
+#include <ns3/enum.h>
 #include "ns3/log.h"
 #include "ns3/yans-wifi-helper.h"
 #include "ns3/ssid.h"
@@ -30,7 +32,12 @@
 #include "ns3/on-off-helper.h"
 #include "ns3/yans-wifi-channel.h"
 #include "ns3/mobility-model.h"
+#include <vector>
+#include <iostream>
+#include <fstream>
 
+#include "ns3/okumura-hata-propagation-loss-model.h"
+#include "ns3/cost231-propagation-loss-model.h"
 #include "ns3/ecc33-propagation-loss-model.h"
 
 using namespace ns3;
@@ -39,19 +46,21 @@ using namespace std;
 NS_LOG_COMPONENT_DEFINE ("EmpiricalPropagationLossComparison");
 
 void
-AdvancePosition (Ptr<Node> tx, Ptr<Node> rx, Ptr<PropagationLossModel> friis, Ptr<PropagationLossModel> ecc33, double stepsSize, double stepsTime)
+AdvancePosition (Ptr<Node> tx, Ptr<Node> rx, vector<Ptr<PropagationLossModel>>  models, double stepsSize, double stepsTime, vector<Gnuplot2dDataset> output)
 {
   Ptr<MobilityModel> tx_mobility = tx->GetObject<MobilityModel> ();
   Ptr<MobilityModel> rx_mobility = rx->GetObject<MobilityModel> ();
   Vector pos = rx_mobility->GetPosition ();
-  cout << "Distance: " << CalculateDistance(pos, tx_mobility->GetPosition()) << " m" << endl;
-  cout << "Model: friis, Path loss: " << 47 - friis->CalcRxPower (47, tx_mobility, rx_mobility) << " dB" << endl;
-  {
-    cout << "Model: ecc33, Path loss: " << 47 - ecc33->CalcRxPower (47, tx_mobility, rx_mobility) << " dB" << endl;
+  double dist = CalculateDistance(pos, tx_mobility->GetPosition());
+  // cout << dist;
+  for(uint16_t i = 0; i < models.size(); i++){
+    // cout << ", " << 47 - models.at(i)->CalcRxPower (47, tx_mobility, rx_mobility);
+    output.at(i).Add(dist, 47 - models.at(i)->CalcRxPower (47, tx_mobility, rx_mobility));
   }
+  // cout << endl;
   pos.x += stepsSize;
   rx_mobility->SetPosition (pos);
-  Simulator::Schedule (Seconds (stepsTime), &AdvancePosition, tx, rx, friis, ecc33, stepsSize, stepsTime);
+  Simulator::Schedule (Seconds (stepsTime), &AdvancePosition, tx, rx, models, stepsSize, stepsTime, output);
 }
 
 int main (int argc, char *argv[])
@@ -71,6 +80,8 @@ int main (int argc, char *argv[])
   cmd.AddValue ("environment", "Environment type", env);
   cmd.Parse (argc, argv);
 
+  // LogComponentEnable ("ECC33PropagationLossModel", LOG_LEVEL_INFO);
+
   if(env == "urban"){
     ap1_z = 33.0;
   } else if (env == "suburban") {
@@ -78,7 +89,7 @@ int main (int argc, char *argv[])
   } else if (env == "rural") {
     ap1_z = 42.0;
   } else {
-    cout << "Invaid environment type" << endl;
+    cout << "Invaid environment type. Please enter 'urban', 'suburban', or 'rural.'" << endl;
     return 1;
   }
 
@@ -88,14 +99,14 @@ int main (int argc, char *argv[])
   NodeContainer wifiApNodes;
   wifiApNodes.Create (1);
 
-  //Define the STAs
+  // Define the STAs
   NodeContainer wifiStaNodes;
   wifiStaNodes.Create (1);
 
   // Configure the mobility.
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
-  //Initial position of AP and STA
+  // Initial position of AP and STA
   positionAlloc->Add (Vector (0.0, 0.0, ap1_z));
   positionAlloc->Add (Vector (80.0, 0.0, sta1_z));
   mobility.SetPositionAllocator (positionAlloc);
@@ -103,16 +114,51 @@ int main (int argc, char *argv[])
   mobility.Install (wifiApNodes.Get (0));
   mobility.Install (wifiStaNodes.Get (0));
 
-  //Propagation Loss Models
+
+  // Propagation Loss Models
+  vector<Ptr<PropagationLossModel>>  models;
+  vector<Gnuplot2dDataset> output;
+
   // Friis/Free space
   Ptr<FriisPropagationLossModel> friis = CreateObject<FriisPropagationLossModel> ();
   friis->SetFrequency (frequency);
+  models.push_back(friis);
+  output.push_back(Gnuplot2dDataset("Friis"));
+
+  // Ericsson
 
   // Hata
+  Ptr<OkumuraHataPropagationLossModel> hata = CreateObject<OkumuraHataPropagationLossModel> ();
+  hata->SetAttribute ("Frequency", DoubleValue(frequency));
+  if(env == "urban"){
+    hata->SetAttribute ("Environment", EnumValue(ns3::UrbanEnvironment));
+    hata->SetAttribute ("CitySize", EnumValue(ns3::LargeCity));
+  } else if (env == "suburban") {
+    hata->SetAttribute ("Environment", EnumValue(ns3::SubUrbanEnvironment));
+    hata->SetAttribute ("CitySize", EnumValue(ns3::MediumCity));
+  } else if (env == "rural"){
+    hata->SetAttribute ("Environment", EnumValue(ns3::OpenAreasEnvironment));
+    hata->SetAttribute ("CitySize", EnumValue(ns3::SmallCity));
+  }
+  models.push_back(hata);
+  output.push_back(Gnuplot2dDataset("Hata"));
 
-  // Cost 231
+  // Cost-231 Hata
+  Ptr<Cost231PropagationLossModel> cost231 = CreateObject<Cost231PropagationLossModel> ();
+  cost231->SetLambda (3e8/frequency);
+  cost231->SetBSAntennaHeight(ap1_z);
+  cost231->SetSSAntennaHeight(sta1_z);
+  if(env == "urban"){
+    cost231->SetShadowing(3);
+  } else {
+    cost231->SetShadowing(0);
+  }
+  models.push_back(cost231);
+  output.push_back(Gnuplot2dDataset("Cost-231"));
 
-  // ECC33
+  // SUI
+
+  // ECC-33
   Ptr<ECC33PropagationLossModel> ecc33 = CreateObject<ECC33PropagationLossModel> ();
   ecc33->SetTxAntennaHeight(ap1_z);
   ecc33->SetRxAntennaHeight(sta1_z);
@@ -122,11 +168,28 @@ int main (int argc, char *argv[])
   } else if (env == "suburban") {
     ecc33->SetEnvironment(ns3::ECC33PropagationLossModel::Suburban);
   }
+  if (env != "rural"){
+    models.push_back(ecc33);
+    output.push_back(Gnuplot2dDataset("ECC-33"));
+  }
 
-  Simulator::Schedule (Seconds (0.5 + stepsTime), &AdvancePosition, wifiApNodes.Get (0), wifiStaNodes.Get (0), friis, ecc33, stepsSize, stepsTime);
+
+  Simulator::Schedule (Seconds (0.5 + stepsTime), &AdvancePosition, wifiApNodes.Get (0), wifiStaNodes.Get (0), models, stepsSize, stepsTime, output);
 
   Simulator::Stop (Seconds (simuTime));
   Simulator::Run ();
+
+  std::ofstream outfile ("propagation-loss-" + env + ".plt");
+  Gnuplot gnuplot = Gnuplot ("propagation-loss-" + env + ".png");
+  gnuplot.SetTerminal ("png");
+  gnuplot.SetLegend ("Distance (m)", "Propagation Loss (dB)");
+  env[0] = toupper(env[0]);
+  gnuplot.SetTitle (env + " Propagation Loss vs Distance");
+  for(uint16_t i = 0; i < output.size(); i++){
+    gnuplot.AddDataset (output.at(i));
+  }
+  gnuplot.GenerateOutput (outfile);
+
   Simulator::Destroy ();
 
   return 0;
