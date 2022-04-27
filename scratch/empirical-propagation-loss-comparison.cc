@@ -39,6 +39,7 @@
 #include "ns3/okumura-hata-propagation-loss-model.h"
 #include "ns3/cost231-propagation-loss-model.h"
 #include "ns3/ecc33-propagation-loss-model.h"
+#include "ns3/ericsson-propagation-loss-model.h"
 
 using namespace ns3;
 using namespace std;
@@ -126,6 +127,19 @@ int main (int argc, char *argv[])
   output.push_back(Gnuplot2dDataset("Friis"));
 
   // Ericsson
+  Ptr<EricssonPropagationLossModel> ericsson = CreateObject<EricssonPropagationLossModel> ();
+  ericsson->SetFrequency(frequency);
+  ericsson->SetTxAntennaHeight(ap1_z);
+  ericsson->SetRxAntennaHeight(sta1_z);
+  if(env == "urban"){
+    ericsson->SetEnvironment(ns3::EricssonPropagationLossModel::Urban);
+  } else if (env == "suburban") {
+    ericsson->SetEnvironment(ns3::EricssonPropagationLossModel::Suburban);
+  } else if (env == "rural") {
+    ericsson->SetEnvironment(ns3::EricssonPropagationLossModel::Rural);
+  }
+  models.push_back(ericsson);
+  output.push_back(Gnuplot2dDataset("Ericsson"));
 
   // Hata
   Ptr<OkumuraHataPropagationLossModel> hata = CreateObject<OkumuraHataPropagationLossModel> ();
@@ -186,6 +200,7 @@ int main (int argc, char *argv[])
   env[0] = toupper(env[0]);
   gnuplot.SetTitle (env + " Propagation Loss vs Distance");
   for(uint16_t i = 0; i < output.size(); i++){
+    output.at(i).SetStyle(Gnuplot2dDataset::Style::LINES);
     gnuplot.AddDataset (output.at(i));
   }
   gnuplot.GenerateOutput (outfile);

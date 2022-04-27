@@ -1,6 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2007,2008, 2009 INRIA, UDcast
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,167 +14,144 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Mohamed Amine Ismail <amine.ismail@sophia.inria.fr>
- *                              <amine.ismail@udcast.com>
  */
 
 #include "ns3/propagation-loss-model.h"
 #include "ns3/log.h"
 #include "ns3/mobility-model.h"
 #include "ns3/double.h"
+#include "ns3/enum.h"
 #include "ns3/pointer.h"
 #include <cmath>
-#include "cost231-propagation-loss-model.h"
+#include "ericsson-propagation-loss-model.h"
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE ("Cost231PropagationLossModel");
+NS_LOG_COMPONENT_DEFINE ("EricssonPropagationLossModel");
 
-NS_OBJECT_ENSURE_REGISTERED (Cost231PropagationLossModel);
+NS_OBJECT_ENSURE_REGISTERED (EricssonPropagationLossModel);
 
 TypeId
-Cost231PropagationLossModel::GetTypeId (void)
+EricssonPropagationLossModel::GetTypeId (void)
 {
-  static TypeId tid = TypeId ("ns3::Cost231PropagationLossModel")
+  static TypeId tid = TypeId ("ns3::EricssonPropagationLossModel")
     .SetParent<PropagationLossModel> ()
     .SetGroupName ("Propagation")
-    .AddConstructor<Cost231PropagationLossModel> ()
-    .AddAttribute ("Lambda",
-                   "The wavelength  (default is 2.3 GHz at 300 000 km/s).",
-                   DoubleValue (300000000.0 / 2.3e9),
-                   MakeDoubleAccessor (&Cost231PropagationLossModel::m_lambda),
-                   MakeDoubleChecker<double> ())
+    .AddConstructor<EricssonPropagationLossModel> ()
     .AddAttribute ("Frequency",
-                   "The Frequency  (default is 2.3 GHz).",
-                   DoubleValue (2.3e9),
-                   MakeDoubleAccessor (&Cost231PropagationLossModel::m_frequency),
+                   "The Frequency  (default is 2 GHz).",
+                   DoubleValue (2e9),
+                   MakeDoubleAccessor (&EricssonPropagationLossModel::m_frequency),
                    MakeDoubleChecker<double> ())
-    .AddAttribute ("BSAntennaHeight",
-                   "BS Antenna Height (default is 50m).",
+    .AddAttribute ("TxAntennaHeight",
+                   "TX Antenna Height (default is 50m).",
                    DoubleValue (50.0),
-                   MakeDoubleAccessor (&Cost231PropagationLossModel::m_BSAntennaHeight),
+                   MakeDoubleAccessor (&EricssonPropagationLossModel::m_TxAntennaHeight),
                    MakeDoubleChecker<double> ())
-    .AddAttribute ("SSAntennaHeight",
-                   "SS Antenna Height (default is 3m).",
+    .AddAttribute ("RxAntennaHeight",
+                   "RX Antenna Height (default is 3m).",
                    DoubleValue (3),
-                   MakeDoubleAccessor (&Cost231PropagationLossModel::m_SSAntennaHeight),
+                   MakeDoubleAccessor (&EricssonPropagationLossModel::m_RxAntennaHeight),
                    MakeDoubleChecker<double> ())
-    .AddAttribute ("MinDistance",
-                   "The distance under which the propagation model refuses to give results (m) ",
-                   DoubleValue (0.5),
-                   MakeDoubleAccessor (&Cost231PropagationLossModel::SetMinDistance, &Cost231PropagationLossModel::GetMinDistance),
-                   MakeDoubleChecker<double> ());
+    .AddAttribute ("Environment",
+                   "Type of environment (default is urban) ",
+                   EnumValue (Urban),
+                   MakeEnumAccessor (&EricssonPropagationLossModel::m_environment),
+                   MakeEnumChecker (Urban, "Urban", Suburban, "Suburban", Rural, "Rural"));
   return tid;
 }
 
-Cost231PropagationLossModel::Cost231PropagationLossModel ()
+EricssonPropagationLossModel::EricssonPropagationLossModel ()
 {
-  m_shadowing = 10;
 }
 
 void
-Cost231PropagationLossModel::SetLambda (double frequency, double speed)
+EricssonPropagationLossModel::SetFrequency (double frequency)
 {
-  m_lambda = speed / frequency;
   m_frequency = frequency;
 }
 
 double
-Cost231PropagationLossModel::GetShadowing (void)
+EricssonPropagationLossModel::GetFrequency (void) const
 {
-  return m_shadowing;
-}
-void
-Cost231PropagationLossModel::SetShadowing (double shadowing)
-{
-  m_shadowing = shadowing;
+  return m_frequency;
 }
 
 void
-Cost231PropagationLossModel::SetLambda (double lambda)
+EricssonPropagationLossModel::SetTxAntennaHeight (double height)
 {
-  m_lambda = lambda;
-  m_frequency = 300000000 / lambda;
+  m_TxAntennaHeight = height;
 }
 
 double
-Cost231PropagationLossModel::GetLambda (void) const
+EricssonPropagationLossModel::GetTxAntennaHeight (void) const
 {
-  return m_lambda;
+  return m_TxAntennaHeight;
 }
 
 void
-Cost231PropagationLossModel::SetMinDistance (double minDistance)
+EricssonPropagationLossModel::SetRxAntennaHeight (double height)
 {
-  m_minDistance = minDistance;
+  m_RxAntennaHeight = height;
 }
+
 double
-Cost231PropagationLossModel::GetMinDistance (void) const
+EricssonPropagationLossModel::GetRxAntennaHeight (void) const
 {
-  return m_minDistance;
+  return m_RxAntennaHeight;
 }
 
 void
-Cost231PropagationLossModel::SetBSAntennaHeight (double height)
+EricssonPropagationLossModel::SetEnvironment (Environment environment)
 {
-  m_BSAntennaHeight = height;
+  m_environment = environment;
+}
+
+EricssonPropagationLossModel::Environment
+EricssonPropagationLossModel::GetEnvironment (void) const
+{
+  return m_environment;
 }
 
 double
-Cost231PropagationLossModel::GetBSAntennaHeight (void) const
-{
-  return m_BSAntennaHeight;
-}
-
-void
-Cost231PropagationLossModel::SetSSAntennaHeight (double height)
-{
-  m_SSAntennaHeight = height;
-}
-
-double
-Cost231PropagationLossModel::GetSSAntennaHeight (void) const
-{
-  return m_SSAntennaHeight;
-}
-
-double
-Cost231PropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+EricssonPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
 {
 
-  double distance = a->GetDistanceFrom (b);
-  if (distance <= m_minDistance)
-    {
-      return 0.0;
-    }
+  double distance = (a->GetDistanceFrom (b)) / 1e3; // distance in km
+  double frequency = m_frequency / 1e6;            //frequency in MHz
 
-  double frequency_MHz = m_frequency * 1e-6;
+  double g_f = 44.49*log10(frequency) - 4.78*pow(log10(frequency), 2);
+  double a0;
+  double a1;
+  double a2 = 12;
+  double a3 = 0.1;
+  if(m_environment == Urban){
+    a0 = 36.2;
+    a1 = 30.2;
+  } else if (m_environment == Suburban){
+    a0 = 43.2;
+    a1 = 68.93;
+  } else if (m_environment == Rural){
+    a0 = 45.95;
+    a1 = 100.6;
+  }
 
-  double distance_km = distance * 1e-3;
+  double loss_in_db = a0 + a1*log10(distance) + a2*log(m_RxAntennaHeight) + a3*log10(m_TxAntennaHeight)*log10(distance) - 3.2*pow(log10(11.75*m_RxAntennaHeight), 2) + g_f;
 
-  double C_H = 0.8 + ((1.11 * std::log10(frequency_MHz)) - 0.7) * m_SSAntennaHeight - (1.56 * std::log10(frequency_MHz));
-
-  // from the COST231 wiki entry
-  // See also http://www.lx.it.pt/cost231/final_report.htm
-  // Ch. 4, eq. 4.4.3, pg. 135
-
-  double loss_in_db = 46.3 + (33.9 * std::log10(frequency_MHz)) - (13.82 * std::log10 (m_BSAntennaHeight)) - C_H
-		  	  	  + ((44.9 - 6.55 * std::log10 (m_BSAntennaHeight)) * std::log10 (distance_km)) + m_shadowing;
-
-  NS_LOG_DEBUG ("dist =" << distance << ", Path Loss = " << loss_in_db);
+  NS_LOG_DEBUG ("dist =" << distance << ", Path Loss = " << loss_in_db << ", g_f = " << g_f << ", a0 = " << a0 << ", a1 = " << a1 << ", a2 = " << a2 << ", a3 = " << a3);
 
   return (0 - loss_in_db);
 
 }
 
 double
-Cost231PropagationLossModel::DoCalcRxPower (double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+EricssonPropagationLossModel::DoCalcRxPower (double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
 {
   return txPowerDbm + GetLoss (a, b);
 }
 
 int64_t
-Cost231PropagationLossModel::DoAssignStreams (int64_t stream)
+EricssonPropagationLossModel::DoAssignStreams (int64_t stream)
 {
   return 0;
 }

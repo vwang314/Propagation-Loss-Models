@@ -18,6 +18,7 @@ def build(bld):
         'model/three-gpp-propagation-loss-model.cc',
         'model/three-gpp-v2v-propagation-loss-model.cc',
         'model/ecc33-propagation-loss-model.cc',
+        'model/ericsson-propagation-loss-model.cc',
         ]
 
     module_test = bld.create_ns3_module_test_library('propagation')
@@ -57,6 +58,7 @@ def build(bld):
         'model/three-gpp-propagation-loss-model.h',
         'model/three-gpp-v2v-propagation-loss-model.h',
         'model/ecc33-propagation-loss-model.h',
+        'model/ericsson-propagation-loss-model.h',
         ]
 
     if (bld.env['ENABLE_EXAMPLES']):

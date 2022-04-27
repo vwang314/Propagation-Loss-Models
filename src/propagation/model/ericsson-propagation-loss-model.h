@@ -1,6 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2007,2008, 2009 INRIA, UDcast
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,12 +14,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Mohamed Amine Ismail <amine.ismail@sophia.inria.fr>
- *                              <amine.ismail@udcast.com>
  */
 
-#ifndef COST231_PROPAGATION_LOSS_MODEL_H
-#define COST231_PROPAGATION_LOSS_MODEL_H
+#ifndef ERICSSON_PROPAGATION_LOSS_MODEL_H
+#define ERICSSON_PROPAGATION_LOSS_MODEL_H
 
 #include "ns3/nstime.h"
 #include "ns3/propagation-loss-model.h"
@@ -30,24 +27,11 @@ namespace ns3 {
 /**
  * \ingroup propagation
  *
- *  \brief The COST-Hata-Model is the most often cited of the COST 231 models.
- *
- *  Also called the Hata Model PCS Extension, it is a radio propagation model
- *  that extends the Hata Model (which in turn is based on the Okumura Model)
- *  to cover a more elaborated range of frequencies. COST (COperation
- *  europ�enne dans le domaine de la recherche Scientifique et Technique)
- *  is a European Union Forum for cooperative scientific research which has
- *  developed this model accordingly to various experiments and researches.
- *  This model is applicable to urban areas. To further evaluate Path Loss
- *  in Suburban or Rural Quasi-open/Open Areas.
- *  Frequency: 1500 MHz to 2000 MHz
- *  Mobile Station Antenna Height: 1 up to 10m
- *  Base station Antenna Height: 30m to 200m
- *  Link Distance:up to 20 km
+ *  \brief Ericsson Propagation Loss Model
  *
  */
 
-class Cost231PropagationLossModel : public PropagationLossModel
+class EricssonPropagationLossModel : public PropagationLossModel
 {
 
 public:
@@ -56,7 +40,11 @@ public:
    * \return the object TypeId
    */
   static TypeId GetTypeId (void);
-  Cost231PropagationLossModel ();
+  EricssonPropagationLossModel ();
+  enum Environment
+  {
+    Rural, Suburban, Urban
+  };
 
   /**
    * Get the propagation loss
@@ -67,88 +55,70 @@ public:
   double GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
 
   /**
-   * Set the BS antenna height
-   * \param height BS antenna height [m]
+   * Set the frequency
+   * \param frequency frequency [Hz]
    */
-  void SetBSAntennaHeight (double height);
+  void SetFrequency (double frequency);
   /**
-   * Set the SS antenna height
-   * \param height SS antenna height [m]
+   * Get the frequency
+   * \returns frequency [Hz]
    */
-  void SetSSAntennaHeight (double height);
-
+  double GetFrequency (void) const;
   /**
-   * Set the wavelength
-   * \param lambda the wavelength
+   * Set the Tx antenna height
+   * \param height Tx antenna height [m]
    */
-  void SetLambda (double lambda);
+  void SetTxAntennaHeight (double height);
   /**
-   * Set the wavelength
-   * \param frequency the signal frequency [Hz]
-   * \param speed the signal speed [m/s]
+   * Get the Tx antenna height
+   * \returns Tx antenna height [m]
    */
-  void SetLambda (double frequency, double speed);
+  double GetTxAntennaHeight (void) const;
   /**
-   * Set the minimum model distance
-   * \param minDistance the minimum model distance
+   * Set the RX antenna height
+   * \param height RX antenna height [m]
    */
-  void SetMinDistance (double minDistance);
+  void SetRxAntennaHeight (double height);
   /**
-   * Get the BS antenna height
-   * \returns BS antenna height [m]
+   * Get the RX antenna height
+   * \returns RX antenna height [m]
    */
-  double GetBSAntennaHeight (void) const;
+  double GetRxAntennaHeight (void) const;
   /**
-   * Get the SS antenna height
-   * \returns SS antenna height [m]
+   * Set the environment
+   * \param environment
    */
-  double GetSSAntennaHeight (void) const;
+  void SetEnvironment (Environment environment);
   /**
-   * Get the minimum model distance
-   * \returns the minimum model distance
+   * Get the environment
+   * \returns environment
    */
-  double GetMinDistance (void) const;
-  /**
-   * Get the wavelength
-   * \returns the wavelength
-   */
-  double GetLambda (void) const;
-  /**
-   * Get the shadowing value
-   * \returns the shadowing value
-   */
-  double GetShadowing (void);
-  /**
-   * Set the shadowing value
-   * \param shadowing the shadowing value
-   */
-  void SetShadowing (double shadowing);
+  Environment GetEnvironment (void) const;
 private:
   /**
    * \brief Copy constructor
    *
    * Defined and unimplemented to avoid misuse
    */
-  Cost231PropagationLossModel (const Cost231PropagationLossModel &);
+  EricssonPropagationLossModel (const EricssonPropagationLossModel &);
   /**
    * \brief Copy constructor
    *
    * Defined and unimplemented to avoid misuse
    * \returns
    */
-  Cost231PropagationLossModel & operator = (const Cost231PropagationLossModel &);
+  EricssonPropagationLossModel & operator = (const EricssonPropagationLossModel &);
 
   virtual double DoCalcRxPower (double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
-  double m_BSAntennaHeight; //!< BS Antenna Height [m]
-  double m_SSAntennaHeight; //!< SS Antenna Height [m]
-  double m_lambda; //!< The wavelength
-  double m_minDistance; //!< minimum distance [m]
+
+  double m_TxAntennaHeight; //!< Tx Antenna Height [m]
+  double m_RxAntennaHeight; //!< Rx Antenna Height [m]
   double m_frequency; //!< frequency [Hz]
-  double m_shadowing; //!< Shadowing loss [dB]
+  Environment m_environment; //!< Environment type
 
 };
 
 }
 
-#endif /* COST231PROPAGATIONMODEL_H */
+#endif /* ERICSSONPROPAGATIONMODEL_H */
