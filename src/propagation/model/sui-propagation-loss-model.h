@@ -19,8 +19,8 @@
  *                              <amine.ismail@udcast.com>
  */
 
-#ifndef COST231_PROPAGATION_LOSS_MODEL_H
-#define COST231_PROPAGATION_LOSS_MODEL_H
+#ifndef SUI_PROPAGATION_LOSS_MODEL_H
+#define SUI_PROPAGATION_LOSS_MODEL_H
 
 #include "ns3/nstime.h"
 #include "ns3/propagation-loss-model.h"
@@ -47,7 +47,7 @@ namespace ns3 {
  *
  */
 
-class Cost231PropagationLossModel : public PropagationLossModel
+class SUIPropagationLossModel : public PropagationLossModel
 {
 
 public:
@@ -56,7 +56,10 @@ public:
    * \return the object TypeId
    */
   static TypeId GetTypeId (void);
-  Cost231PropagationLossModel ();
+  SUIPropagationLossModel ();
+  enum Terrain {
+    A, B, C
+  };
 
   /**
    * Get the propagation loss
@@ -89,11 +92,6 @@ public:
    */
   void SetLambda (double frequency, double speed);
   /**
-   * Set the minimum model distance
-   * \param minDistance the minimum model distance
-   */
-  void SetMinDistance (double minDistance);
-  /**
    * Get the BS antenna height
    * \returns BS antenna height [m]
    */
@@ -103,11 +101,6 @@ public:
    * \returns SS antenna height [m]
    */
   double GetSSAntennaHeight (void) const;
-  /**
-   * Get the minimum model distance
-   * \returns the minimum model distance
-   */
-  double GetMinDistance (void) const;
   /**
    * Get the wavelength
    * \returns the wavelength
@@ -123,32 +116,42 @@ public:
    * \param shadowing the shadowing value
    */
   void SetShadowing (double shadowing);
+  /**
+   * Set the terrain
+   * \param terrain
+   */
+  void SetTerrain (Terrain terrain);
+  /**
+   * Get the terrain
+   * \returns terrain
+   */
+  Terrain GetTerrain (void) const;
 private:
   /**
    * \brief Copy constructor
    *
    * Defined and unimplemented to avoid misuse
    */
-  Cost231PropagationLossModel (const Cost231PropagationLossModel &);
+  SUIPropagationLossModel (const SUIPropagationLossModel &);
   /**
    * \brief Copy constructor
    *
    * Defined and unimplemented to avoid misuse
    * \returns
    */
-  Cost231PropagationLossModel & operator = (const Cost231PropagationLossModel &);
+  SUIPropagationLossModel & operator = (const SUIPropagationLossModel &);
 
   virtual double DoCalcRxPower (double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
   double m_BSAntennaHeight; //!< BS Antenna Height [m]
   double m_SSAntennaHeight; //!< SS Antenna Height [m]
   double m_lambda; //!< The wavelength
-  double m_minDistance; //!< minimum distance [m]
   double m_frequency; //!< frequency [Hz]
   double m_shadowing; //!< Shadowing loss [dB]
+  Terrain m_terrain; //!< type of terrain
 
 };
 
 }
 
-#endif /* COST231PROPAGATIONMODEL_H */
+#endif /* SUIPROPAGATIONMODEL_H */
