@@ -163,12 +163,12 @@ SUIPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) co
     modparam_a = 4.0;
     modparam_b = 0.0065;
     modparam_c = 17.1;
-    Xh *= -10.8 * std::log10(m_SSAntennaHeight / 2000.0);
+    Xh = -10.8 * std::log10(m_SSAntennaHeight / 2000.0);
   } else if (m_terrain == C) {
     modparam_a = 3.6;
     modparam_b = 0.005;
     modparam_c = 20.0;
-    Xh *= -20.0 * std::log10(m_SSAntennaHeight / 20000.0);
+    Xh = -20.0 * std::log10(m_SSAntennaHeight / 20000.0);
   }
 
   double param_A = 20 * log10(4 * M_PI * d0 / m_lambda);
