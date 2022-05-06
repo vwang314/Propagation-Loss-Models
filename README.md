@@ -7,3 +7,4 @@ Comparison of empirical propagation path loss models with NS-3 simulator. Based 
 `./waf --run 'empirical-propagation-loss-comparison.cc --environment=urban'`  
 `./waf --run 'empirical-propagation-loss-comparison.cc --environment=suburban'`  
 `./waf --run 'empirical-propagation-loss-comparison.cc --environment=rural'`
+3. Run `gnuplot propagation-loss-*.plt` to view the plots
