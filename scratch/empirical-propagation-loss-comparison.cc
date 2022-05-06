@@ -220,12 +220,12 @@ int main (int argc, char *argv[])
   gnuplot.SetTerminal ("png");
   gnuplot.SetLegend ("Distance (m)", "Propagation Loss (dB)");
   env[0] = toupper(env[0]);
-  gnuplot.SetTitle (env + " Propagation Loss vs Path");
+  gnuplot.SetTitle (env + " Propagation Loss vs Distance");
   // gnuplot.AppendExtra ("set xlabel 'X Pos (m)' offset 0,0,-5");
   // gnuplot.AppendExtra ("set ylabel 'Y Pos (m)' offset 0,0,0");
-  gnuplot.AppendExtra ("set zlabel 'Path loss (dB)' offset 0,0,0");
+  // gnuplot.AppendExtra ("set zlabel 'Path loss (dB)' offset 0,0,0");
   gnuplot.AppendExtra ("set xrange [100:+800]");
-  gnuplot.AppendExtra ("set yrange [20:+200]");
+  gnuplot.AppendExtra ("set yrange [0:+200]");
   //gnuplot.AppendExtra ("set zrange [0:+200]");
   //gnuplot.AppendExtra ("set ticslevel 0");
 
