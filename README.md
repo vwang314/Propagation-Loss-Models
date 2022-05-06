@@ -3,5 +3,7 @@ Comparison of empirical propagation path loss models with NS-3 simulator. Based 
 
 ## How to use
 1. Put files in the appropriate locations. Structure of the repo matches ns-3 directory structure so files can just be copied over.
-2. Run `./waf build` to build the new models
-3. Run empirical-propagation-loss-comparison.cc with Waf
+2. Run empirical-propagation-loss-comparison.cc with Waf, ns-3 should automatically build the new models from the wscript file  
+`./waf --run 'empirical-propagation-loss-comparison.cc --environment=urban'`  
+`./waf --run 'empirical-propagation-loss-comparison.cc --environment=suburban'`  
+`./waf --run 'empirical-propagation-loss-comparison.cc --environment=rural'`
